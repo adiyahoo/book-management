@@ -193,7 +193,7 @@ impl Book {
                             );
                         }
                         Err(err) => {
-                            eprintln!("Error reading row: {}", err);
+                            println!("Error reading row: {}", err);
                         }
                     }
                 } else {
@@ -223,7 +223,7 @@ impl Book {
                             );
                         }
                         Err(err) => {
-                            eprintln!("Error reading row: {}", err);
+                            println!("Error reading row: {}", err);
                         }
                     }
                 } else {
