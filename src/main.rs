@@ -152,7 +152,59 @@ impl Book {
         }
     }
 
-    fn select_books(conn: &mut mysql::PooledConn) {
+    pub fn select_books_id(conn: &mut mysql::PooledConn) {
+        let select_query = "SELECT id, name_book, genre, author FROM book WHERE id = :id_column";
+        let mut user_input = String::new();
+    
+        
+        loop {
+            println!("Input ID column: ");
+            
+            io::stdin()
+                .read_line(&mut user_input)
+                .expect("Error reading ID column");
+    
+            if user_input.trim().is_empty() {
+                continue;
+            } else {
+                break;
+            }
+        }
+    
+        let id_input: u32 = user_input.trim().parse().expect("Error parsing ID column");
+    
+        let params = params! {
+            "id_column" => id_input
+        };
+    
+        match conn.exec_iter(select_query, params) {
+            Ok(mut result) => {
+                if let Some(row) = result.next() {
+                    match row {
+                        Ok(row) => {
+                            let id: u32 = row.get("id").unwrap();
+                            let name: String = row.get("name_book").unwrap();
+                            let genre: String = row.get("genre").unwrap();
+                            let author: String = row.get("author").unwrap();
+    
+                            println!(
+                                "ID: {}, Name: {}, Genre: {}, Author: {}",
+                                id, name, genre, author
+                            );
+                        }
+                        Err(err) => {
+                            eprintln!("Error reading row: {}", err);
+                        }
+                    }
+                } else {
+                    println!("No books found.");
+                }
+            }
+            Err(err) => println!("Error executing query: {}", err),
+        }
+    }
+
+    pub fn select_books(conn: &mut mysql::PooledConn) {
         let select_query = "SELECT id, name_book, genre, author FROM book";
 
         match conn.query_iter(select_query) {
@@ -179,16 +231,17 @@ impl Book {
                 }
             }
             Err(err) => {
-                eprintln!("Error executing query: {}", err);
+                println!("Error executing query: {}", err);
             }
         }
     }
-}
+    }
 
 fn help_command() { 
     println!("Using: book add, for add data");
     println!("Using: book delete. for delete data");
     println!("Using: book select, for select data"); 
+    println!("Using: book id, for select data with id"); 
     println!("Using: create_table to create table"); 
 }
 
@@ -198,6 +251,7 @@ fn match_command(args: &[String], conn: &mut mysql::PooledConn) {
             "add" => Book::input_book(conn),
             "delete" => Book::delete_book(conn),
             "select" => Book::select_books(conn),
+            "id" => Book::select_books_id(conn),
             "create_table" => my_table::create_table(conn),
             "help" => help_command(),
             _ => println!("Unknown command, using > book help"),
